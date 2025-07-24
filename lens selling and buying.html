@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LensLoop - Buy & Sell Used Lenses</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #fce4ec);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #6a1b9a;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 2.5rem;
+    }
+    nav {
+      background-color: #ab47bc;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      padding: 10px;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    .container {
+      padding: 30px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .form-section, .list-section, .dashboard {
+      background-color: white;
+      padding: 20px;
+      margin-bottom: 40px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .form-section h2, .list-section h2, .dashboard h2 {
+      color: #2d3436;
+    }
+    .form-section form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    input, select, textarea {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 100%;
+    }
+    .btn {
+      background-color: #d81b60;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .product {
+      border: 1px solid #dfe6e9;
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 20px;
+      background: #f1f2f6;
+      position: relative;
+    }
+    .product img {
+      max-width: 150px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .call-btn, .pay-btn, .cart-btn, .delete-btn {
+      display: inline-block;
+      margin-right: 10px;
+      padding: 10px 20px;
+      background-color: #6c5ce7;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .cart-area {
+      background-color: #fff3e0;
+      border-radius: 10px;
+      padding: 15px;
+    }
+    .qr-img {
+      max-width: 100px;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>LensLoop 👓 Buy & Sell Used Lenses</header>
+  <nav>
+    <a href="#sell">📤 Sell Lens</a>
+    <a href="#buyerDashboard">🧑‍💼 Buyer Dashboard</a>
+  </nav>
+  <div class="container">
+    <section class="form-section" id="sell">
+      <h2>📤 Seller Dashboard - Post Your Lens</h2>
+      <form id="sellForm">
+        <input type="text" placeholder="Your Name" required>
+        <input type="text" placeholder="Contact Number" required>
+        <input type="text" placeholder="City" required>
+        <select id="company" required>
+          <option value="">Select Lens Company</option>
+          <option value="Bausch & Lomb">Bausch & Lomb</option>
+          <option value="Acuvue">Acuvue</option>
+          <option value="FreshLook">FreshLook</option>
+          <option value="Other">Other</option>
+        </select>
+        <select id="power" required>
+          <option value="">Select Lens Power</option>
+          <option value="-1.00">-1.00</option>
+          <option value="-2.00">-2.00</option>
+          <option value="-3.00">-3.00</option>
+          <option value="-4.00">-4.00</option>
+          <option value="+1.00">+1.00</option>
+          <option value="+2.00">+2.00</option>
+        </select>
+        <input type="number" placeholder="Price (INR)" required>
+        <input type="file" id="lensImg" accept="image/*" required>
+        <textarea placeholder="Additional Info"></textarea>
+        <select id="paymentMethod">
+          <option value="">Select Payment Method</option>
+          <option value="paytm">Paytm</option>
+          <option value="phonepe">PhonePe</option>
+          <option value="gpay">GPay</option>
+        </select>
+        <input type="file" id="qrImg" accept="image/*" style="display: none;">
+        <button class="btn" type="submit">Submit Listing</button>
+      </form>
+    </section>
+
+    <section class="dashboard" id="buyerDashboard">
+      <h2>🧑‍💼 Buyer Dashboard</h2>
+      <div>
+        <label for="filterPower">Filter by Power:</label>
+        <select id="filterPower">
+          <option value="">All</option>
+          <option value="-1.00">-1.00</option>
+          <option value="-2.00">-2.00</option>
+          <option value="-3.00">-3.00</option>
+          <option value="-4.00">-4.00</option>
+          <option value="+1.00">+1.00</option>
+          <option value="+2.00">+2.00</option>
+        </select>
+        <label for="filterPrice">Max Price:</label>
+        <input type="number" id="filterPrice" placeholder="e.g. 500">
+        <button onclick="applyFilters()">Apply Filters</button>
+      </div>
+      <div id="filteredListings"></div>
+    </section>
+
+    <section class="dashboard">
+      <h2>📋 Cart Overview</h2>
+      <div class="cart-area">
+        <h3>🛒 Your Cart</h3>
+        <ul id="cartList"></ul>
+        <p><strong>Total:</strong> ₹<span id="cartTotal">0</span></p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let listings = JSON.parse(localStorage.getItem('lensListings')) || [];
+    let cart = JSON.parse(localStorage.getItem('lensCart')) || [];
+
+    document.getElementById('paymentMethod').addEventListener('change', function() {
+      document.getElementById('qrImg').style.display = this.value ? 'block' : 'none';
+    });
+
+    document.getElementById('sellForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        name: form[0].value,
+        number: form[1].value,
+        city: form[2].value,
+        company: form[3].value,
+        power: form[4].value,
+        price: form[5].value,
+        info: form[7].value,
+      };
+      const imageFile = form[6].files[0];
+      const qrFile = form[9].files[0];
+
+      const reader = new FileReader();
+      reader.onload = function() {
+        data.image = reader.result;
+        if (qrFile) {
+          const qrReader = new FileReader();
+          qrReader.onload = function() {
+            data.qr = qrReader.result;
+            saveListing(data);
+          };
+          qrReader.readAsDataURL(qrFile);
+        } else {
+          data.qr = '';
+          saveListing(data);
+        }
+      };
+      reader.readAsDataURL(imageFile);
+    });
+
+    function saveListing(listing) {
+      listings.push(listing);
+      localStorage.setItem('lensListings', JSON.stringify(listings));
+      renderListings();
+      alert("Lens posted successfully!");
+    }
+
+    function applyFilters() {
+      const power = document.getElementById('filterPower').value;
+      const price = document.getElementById('filterPrice').value;
+      const result = listings.filter(item => {
+        return (!power || item.power === power) && (!price || parseFloat(item.price) <= parseFloat(price));
+      });
+
+      const div = document.getElementById('filteredListings');
+      div.innerHTML = '';
+      result.forEach((item, index) => div.appendChild(createProductCard(item, index)));
+    }
+
+    function createProductCard(item, index) {
+      const el = document.createElement('div');
+      el.className = 'product';
+      el.innerHTML = `
+        <img src="${item.image}" alt="Lens Image">
+        <h3>${item.company} | Power: ${item.power}</h3>
+        <p><strong>Seller:</strong> ${item.name} (${item.city})</p>
+        <p><strong>Price:</strong> ₹${item.price}</p>
+        <p>${item.info}</p>
+        <a href="tel:${item.number}" class="call-btn">📞 Call Seller</a>
+        ${item.qr ? `<img src="${item.qr}" class="qr-img" alt="QR Code">` : ''}
+        <a href="upi://pay?pa=${item.number}@upi&pn=${item.name}&am=${item.price}&cu=INR" class="pay-btn">💸 Buy Now</a>
+        <button class="cart-btn" onclick="toggleCart(${index})">${cart.includes(index) ? 'Remove from Cart' : 'Add to Cart'}</button>
+        <button class="delete-btn" onclick="deleteListing(${index})">🗑️ Delete</button>
+      `;
+      return el;
+    }
+
+    function toggleCart(index) {
+      const i = cart.indexOf(index);
+      if (i > -1) {
+        cart.splice(i, 1);
+      } else {
+        cart.push(index);
+      }
+      localStorage.setItem('lensCart', JSON.stringify(cart));
+      renderListings();
+    }
+
+    function deleteListing(index) {
+      listings.splice(index, 1);
+      localStorage.setItem('lensListings', JSON.stringify(listings));
+      renderListings();
+    }
+
+    function renderListings() {
+      const div = document.getElementById('filteredListings');
+      div.innerHTML = '';
+      listings.forEach((item, i) => div.appendChild(createProductCard(item, i)));
+
+      const cartList = document.getElementById('cartList');
+      const cartTotal = document.getElementById('cartTotal');
+      cartList.innerHTML = '';
+      let total = 0;
+      cart.forEach(i => {
+        const li = document.createElement('li');
+        li.textContent = `${listings[i].company} (${listings[i].power}) - ₹${listings[i].price}`;
+        cartList.appendChild(li);
+        total += parseFloat(listings[i].price);
+      });
+      cartTotal.textContent = total.toFixed(2);
+    }
+
+    renderListings();
+  </script>
+</body>
+</html>
